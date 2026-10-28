@@ -1,7 +1,7 @@
 ---
-- name: Recreate compose stack
+- name: Recreate openelis stack
   community.docker.docker_compose_v2:
-    project_src: "{{ compose_project_root }}/{{ compose_stack.name }}"
+    project_src: "{{ openelis_install_dir }}"
     state: present
     recreate: always
     remove_orphans: true

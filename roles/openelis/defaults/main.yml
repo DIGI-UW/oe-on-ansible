@@ -1,0 +1,5 @@
+---
+openelis_repo_url: https://github.com/DIGI-UW/OpenELIS-Global-2.git
+openelis_repo_ref: develop
+openelis_install_dir: /opt/openelis
+openelis_env: {}

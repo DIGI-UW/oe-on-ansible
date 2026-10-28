@@ -1,4 +1,0 @@
----
-compose_stack:
-  name: default
-  services: {}

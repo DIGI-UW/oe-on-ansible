@@ -1,0 +1,7 @@
+---
+# Per-host overrides for openElis01.
+# Any keys set under openelis_env here are merged on top of group_vars/all.yml.
+# Example:
+# openelis_env:
+#   OE_HTTP_PORT: "80"
+#   OE_DB_PASSWORD: "{{ vault_oe_db_password }}"

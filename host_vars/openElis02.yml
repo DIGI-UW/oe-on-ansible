@@ -1,0 +1,3 @@
+---
+# Per-host overrides for openElis02.
+# Any keys set under openelis_env here are merged on top of group_vars/all.yml.

@@ -1,63 +1,69 @@
-# Ansible Docker Compose Management
+# OpenELIS on Ansible
 
-A simple Ansible setup that provisions three Linux servers and manages Docker Compose based applications on them.
+Ansible playbooks that provision Linux hosts and deploy standalone
+[OpenELIS Global 2](https://github.com/DIGI-UW/OpenELIS-Global-2) instances
+on each one, driven by the compose stack that lives in that upstream
+repository.
 
 ## Overview
 
-This project uses Ansible to:
+Each managed host runs the full OpenELIS stack (database, webapp, FHIR
+server, frontend, nginx proxy, cert bootstrap) as defined by
+`docker-compose.yml` in `DIGI-UW/OpenELIS-Global-2`. Ansible:
 
-1. Bootstrap three remote servers with common packages and hardened SSH.
-2. Install Docker Engine and the Docker Compose plugin.
-3. Deploy per-host `docker-compose.yml` stacks (web, database, monitoring).
-4. Provide idempotent playbooks for updates, restarts, and teardown.
+1. Bootstraps the OS (packages, timezone, firewall).
+2. Installs Docker Engine and the Compose plugin.
+3. Clones (or updates) the OpenELIS repo at a configurable ref into
+   `/opt/openelis` on each host.
+4. Renders a per-host `.env` file consumed by that compose stack.
+5. Brings the stack up with `community.docker.docker_compose_v2`.
 
 ## Project Structure
 
 ```
-ansible/
+.
 ├── README.md
-├── ansible.cfg               # Ansible defaults (inventory path, SSH, roles path)
+├── ansible.cfg
 ├── inventory/
-│   └── hosts.yml             # Three managed servers grouped by role
+│   └── hosts.yml             # openElis01, openElis02, openElis03
 ├── group_vars/
-│   └── all.yml               # Variables shared across all hosts
+│   └── all.yml               # Repo URL, ref, install dir, default .env values
 ├── host_vars/
-│   ├── web01.yml             # Per-host overrides
-│   ├── db01.yml
-│   └── monitor01.yml
+│   ├── openElis01.yml        # Per-host env overrides
+│   ├── openElis02.yml
+│   └── openElis03.yml
 ├── playbooks/
 │   ├── site.yml              # Full provisioning entrypoint
-│   ├── bootstrap.yml         # Base packages, users, SSH
+│   ├── bootstrap.yml         # Base packages, timezone, firewall
 │   ├── docker.yml            # Install Docker + Compose plugin
-│   ├── deploy.yml            # Render compose files and bring stacks up
-│   ├── update.yml            # Pull new images and recreate containers
-│   └── down.yml              # Stop and remove stacks
-├── roles/
-│   ├── common/               # OS baseline (packages, timezone, users)
-│   ├── docker/               # Docker engine + compose plugin install
-│   └── app/                  # Per-host compose stack management
-└── files/
-    └── compose/              # Static compose fragments referenced by role
+│   ├── deploy.yml            # Clone repo, render .env, bring stack up
+│   ├── update.yml            # git pull, image pull, recreate
+│   └── down.yml              # Stop and remove the stack
+└── roles/
+    ├── common/               # OS baseline
+    ├── docker/               # Docker engine + compose plugin install
+    └── openelis/             # Clone OpenELIS repo, render .env, run compose
 ```
 
-## Managed Servers
+## Managed Hosts
 
-| Host       | Role       | Compose Stack                          |
-|------------|------------|----------------------------------------|
-| web01      | web        | nginx + application container          |
-| db01       | database   | postgres + backup sidecar              |
-| monitor01  | monitoring | prometheus + grafana + node exporter   |
+| Host         | Role              |
+|--------------|-------------------|
+| openElis01   | OpenELIS instance |
+| openElis02   | OpenELIS instance |
+| openElis03   | OpenELIS instance |
 
-Hostnames, IPs, and SSH users are defined in `inventory/hosts.yml`. Override per-host settings in `host_vars/<hostname>.yml`.
+Hostnames and IPs are set in `inventory/hosts.yml`. Each host runs the
+same compose stack independently (no inter-host dependencies).
 
 ## Requirements
 
 - Ansible 2.14+ on the control node
 - Python 3.9+ on all managed hosts
-- SSH key-based access to all three servers as a user with sudo
+- SSH key-based access to each host as a user with sudo
 - Ubuntu 22.04 / Debian 12 (adjust `roles/docker` for other distros)
 
-Install collections used by the docker role:
+Install the required collection:
 
 ```
 ansible-galaxy collection install community.docker
@@ -65,14 +71,14 @@ ansible-galaxy collection install community.docker
 
 ## Quick Start
 
-1. Edit `inventory/hosts.yml` and set the `ansible_host` addresses and `ansible_user` for each server.
+1. Set `ansible_host` for each host in `inventory/hosts.yml`.
 2. Confirm connectivity:
 
    ```
    ansible all -m ping
    ```
 
-3. Run the full provisioning playbook:
+3. Provision everything:
 
    ```
    ansible-playbook playbooks/site.yml
@@ -80,70 +86,80 @@ ansible-galaxy collection install community.docker
 
 ## Common Operations
 
-Provision everything from scratch:
-
-```
-ansible-playbook playbooks/site.yml
-```
-
-Only install Docker on new hosts:
-
-```
-ansible-playbook playbooks/docker.yml --limit web01
-```
-
-Deploy or update compose stacks:
+Deploy or redeploy the stack on every host:
 
 ```
 ansible-playbook playbooks/deploy.yml
 ```
 
-Pull newer images and recreate containers:
+Pull repo changes and newer images, then recreate containers:
 
 ```
 ansible-playbook playbooks/update.yml
 ```
 
-Bring stacks down (containers stopped, data preserved):
+Stop the stack (containers removed, named volumes preserved):
 
 ```
 ansible-playbook playbooks/down.yml
 ```
 
-Target a single host or group:
+Target a single host:
 
 ```
-ansible-playbook playbooks/deploy.yml --limit database
+ansible-playbook playbooks/deploy.yml --limit openElis02
 ```
 
-## Variables
+## Configuration
 
-Global defaults live in `group_vars/all.yml`. Common values you may want to change:
+`group_vars/all.yml` defines the shared defaults:
 
-- `timezone`
-- `docker_users` (users added to the `docker` group)
-- `compose_project_root` (where compose files are rendered on each host)
-- `app_env` (environment name passed into templates)
+- `openelis_repo_url` — git URL of OpenELIS-Global-2 (default: the
+  DIGI-UW fork).
+- `openelis_repo_ref` — branch, tag, or commit to deploy
+  (default: `develop`).
+- `openelis_install_dir` — where the repo is cloned on each host
+  (default: `/opt/openelis`).
+- `openelis_env` — key/value map rendered into
+  `{{ openelis_install_dir }}/.env` and consumed by the compose file.
+  Keys mirror the variables referenced in the upstream
+  `docker-compose.yml` (`OE_HTTP_PORT`, `OE_DB_PASSWORD`,
+  `SSL_KEYSTORE_PASSWORD`, `OE_ENCRYPTION_PASSWORD`, etc.).
 
-Per-host stacks are declared in `host_vars/<hostname>.yml` under the `compose_stack` key. The `app` role renders that structure into `docker-compose.yml` and calls the `community.docker.docker_compose_v2` module.
+Per-host overrides go in `host_vars/<hostname>.yml`. Anything set under
+`openelis_env` there merges on top of the group defaults, so a single
+host can run on a different port or with a different DB password without
+duplicating the whole block.
 
 ## Secrets
 
 Do not commit plaintext credentials. Use Ansible Vault:
 
 ```
-ansible-vault encrypt group_vars/all/vault.yml
+ansible-vault create group_vars/all/vault.yml
 ansible-playbook playbooks/site.yml --ask-vault-pass
 ```
 
-Reference vaulted values from unencrypted vars files (e.g. `db_password: "{{ vault_db_password }}"`).
+The default `openelis_env` references vault variables such as
+`vault_oe_db_password`, `vault_ssl_keystore_password`,
+`vault_ssl_truststore_password`, `vault_oe_admin_password`, and
+`vault_oe_encryption_password`. Define them in the vaulted file.
 
 ## Troubleshooting
 
-- Increase verbosity with `-vvv` to see SSH and module output.
-- Use `--check --diff` to preview changes before applying.
-- If Docker install fails, verify the host distro matches the repo added in `roles/docker/tasks/main.yml`.
-- To inspect a stack on a host: `ssh <host> "cd /opt/compose/<stack> && docker compose ps"`.
+- Verbose output: `ansible-playbook ... -vvv`.
+- Preview changes: `--check --diff`.
+- Inspect the stack on a host:
+
+  ```
+  ssh openElis01 "cd /opt/openelis && docker compose ps"
+  ```
+
+- Logs for a service:
+
+  ```
+  ssh openElis01 "cd /opt/openelis && docker compose logs oe.openelis.org"
+  ```
 
 ## License
 

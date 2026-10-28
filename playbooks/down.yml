@@ -1,9 +1,9 @@
 ---
-- name: Stop compose stacks
-  hosts: all
+- name: Stop OpenELIS stacks
+  hosts: openelis
   gather_facts: false
   tasks:
-    - name: Bring compose stack down
+    - name: Bring OpenELIS stack down
       community.docker.docker_compose_v2:
-        project_src: "{{ compose_project_root }}/{{ compose_stack.name }}"
+        project_src: "{{ openelis_install_dir }}"
         state: absent

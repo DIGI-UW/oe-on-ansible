@@ -12,5 +12,20 @@ common_packages:
 docker_users:
   - "{{ ansible_user }}"
 
-compose_project_root: /opt/compose
-app_env: production
+openelis_repo_url: https://github.com/DIGI-UW/OpenELIS-Global-2.git
+openelis_repo_ref: develop
+openelis_install_dir: /opt/openelis
+
+openelis_env:
+  TZ: "{{ timezone }}"
+  OE_HTTP_PORT: "80"
+  OE_HTTPS_PORT: "443"
+  OE_WEBAPP_HTTP_PORT: "8080"
+  OE_WEBAPP_HTTPS_PORT: "8443"
+  OE_FHIR_HTTP_PORT: "8081"
+  OE_FHIR_HTTPS_PORT: "8444"
+  SSL_KEYSTORE_PASSWORD: "{{ vault_ssl_keystore_password | default('kspass') }}"
+  SSL_TRUSTSTORE_PASSWORD: "{{ vault_ssl_truststore_password | default('tspass') }}"
+  OE_DB_PASSWORD: "{{ vault_oe_db_password | default('clinlims') }}"
+  ADMIN_PASSWORD: "{{ vault_oe_admin_password | default('superuser') }}"
+  OE_ENCRYPTION_PASSWORD: "{{ vault_oe_encryption_password | default('') }}"

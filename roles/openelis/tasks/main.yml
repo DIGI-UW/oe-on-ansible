@@ -1,0 +1,27 @@
+---
+- name: Ensure install directory exists
+  ansible.builtin.file:
+    path: "{{ openelis_install_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Clone or update OpenELIS-Global-2 repository
+  ansible.builtin.git:
+    repo: "{{ openelis_repo_url }}"
+    dest: "{{ openelis_install_dir }}"
+    version: "{{ openelis_repo_ref }}"
+    force: true
+  notify: Recreate openelis stack
+
+- name: Render .env file for compose
+  ansible.builtin.template:
+    src: openelis.env.j2
+    dest: "{{ openelis_install_dir }}/.env"
+    mode: "0640"
+  notify: Recreate openelis stack
+
+- name: Bring OpenELIS stack up
+  community.docker.docker_compose_v2:
+    project_src: "{{ openelis_install_dir }}"
+    state: present
+    remove_orphans: true

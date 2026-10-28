@@ -1,15 +1,22 @@
 ---
-- name: Pull newer images and recreate containers
-  hosts: all
+- name: Update OpenELIS stacks
+  hosts: openelis
   gather_facts: false
   tasks:
+    - name: Pull latest repository changes
+      ansible.builtin.git:
+        repo: "{{ openelis_repo_url }}"
+        dest: "{{ openelis_install_dir }}"
+        version: "{{ openelis_repo_ref }}"
+        force: true
+
     - name: Pull latest images for the stack
       community.docker.docker_compose_v2_pull:
-        project_src: "{{ compose_project_root }}/{{ compose_stack.name }}"
+        project_src: "{{ openelis_install_dir }}"
 
     - name: Recreate containers with new images
       community.docker.docker_compose_v2:
-        project_src: "{{ compose_project_root }}/{{ compose_stack.name }}"
+        project_src: "{{ openelis_install_dir }}"
         state: present
         recreate: always
         remove_orphans: true

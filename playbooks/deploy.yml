@@ -1,6 +1,6 @@
 ---
-- name: Deploy compose stacks
-  hosts: all
+- name: Deploy OpenELIS stacks
+  hosts: openelis
   gather_facts: true
   roles:
-    - app
+    - openelis
