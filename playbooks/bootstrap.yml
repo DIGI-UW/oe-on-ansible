@@ -1,0 +1,6 @@
+---
+- name: Baseline OS configuration
+  hosts: all
+  gather_facts: true
+  roles:
+    - common

@@ -1,0 +1,15 @@
+---
+- name: Pull newer images and recreate containers
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Pull latest images for the stack
+      community.docker.docker_compose_v2_pull:
+        project_src: "{{ compose_project_root }}/{{ compose_stack.name }}"
+
+    - name: Recreate containers with new images
+      community.docker.docker_compose_v2:
+        project_src: "{{ compose_project_root }}/{{ compose_stack.name }}"
+        state: present
+        recreate: always
+        remove_orphans: true

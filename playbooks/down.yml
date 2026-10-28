@@ -1,0 +1,9 @@
+---
+- name: Stop compose stacks
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Bring compose stack down
+      community.docker.docker_compose_v2:
+        project_src: "{{ compose_project_root }}/{{ compose_stack.name }}"
+        state: absent

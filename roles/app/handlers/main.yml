@@ -1,0 +1,7 @@
+---
+- name: Recreate compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ compose_project_root }}/{{ compose_stack.name }}"
+    state: present
+    recreate: always
+    remove_orphans: true

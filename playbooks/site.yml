@@ -1,0 +1,9 @@
+---
+- name: Bootstrap base configuration on all hosts
+  import_playbook: bootstrap.yml
+
+- name: Install Docker engine and compose plugin
+  import_playbook: docker.yml
+
+- name: Deploy application compose stacks
+  import_playbook: deploy.yml

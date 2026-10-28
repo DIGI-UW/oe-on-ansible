@@ -1,0 +1,16 @@
+---
+timezone: UTC
+
+common_packages:
+  - curl
+  - git
+  - htop
+  - ufw
+  - ca-certificates
+  - gnupg
+
+docker_users:
+  - "{{ ansible_user }}"
+
+compose_project_root: /opt/compose
+app_env: production

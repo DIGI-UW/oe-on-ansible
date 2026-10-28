@@ -1,0 +1,6 @@
+---
+- name: Install Docker engine and Compose plugin
+  hosts: all
+  gather_facts: true
+  roles:
+    - docker
