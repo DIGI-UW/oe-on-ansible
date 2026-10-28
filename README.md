@@ -161,6 +161,3 @@ The default `openelis_env` references vault variables such as
   ssh openElis01 "cd /opt/openelis && docker compose logs oe.openelis.org"
   ```
 
-## License
-
-Internal tooling. Adapt freely within your organization.
