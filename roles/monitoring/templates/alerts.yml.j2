@@ -1,0 +1,20 @@
+groups:
+  - name: host_availability
+    rules:
+      - alert: HostDown
+        expr: probe_success == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host {% raw %}{{ $labels.instance }}{% endraw %} unreachable"
+          description: "Blackbox probe to {% raw %}{{ $labels.instance }}{% endraw %} (job {% raw %}{{ $labels.job }}{% endraw %}) has failed for 2 minutes."
+
+      - alert: NodeExporterDown
+        expr: up{job="node_exporter"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "node_exporter down on {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "Prometheus has not scraped node_exporter on {% raw %}{{ $labels.instance }}{% endraw %} for 2 minutes."

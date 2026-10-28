@@ -16,6 +16,12 @@ openelis_repo_url: https://github.com/DIGI-UW/OpenELIS-Global-2.git
 openelis_repo_ref: develop
 openelis_install_dir: /opt/openelis
 
+node_exporter_project_dir: /opt/node_exporter
+node_exporter_port: 9100
+
+monitoring_project_dir: /opt/monitoring
+monitoring_data_dir: /opt/monitoring/data
+
 openelis_env:
   TZ: "{{ timezone }}"
   OE_HTTP_PORT: "80"

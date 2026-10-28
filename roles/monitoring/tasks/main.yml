@@ -1,0 +1,95 @@
+---
+- name: Ensure monitoring project directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ monitoring_project_dir }}"
+    - "{{ monitoring_project_dir }}/prometheus"
+    - "{{ monitoring_project_dir }}/blackbox"
+    - "{{ monitoring_project_dir }}/alertmanager"
+    - "{{ monitoring_project_dir }}/grafana/provisioning/datasources"
+    - "{{ monitoring_project_dir }}/grafana/provisioning/dashboards"
+    - "{{ monitoring_data_dir }}/prometheus"
+    - "{{ monitoring_data_dir }}/grafana"
+    - "{{ monitoring_data_dir }}/alertmanager"
+
+- name: Fix Prometheus data volume ownership
+  ansible.builtin.file:
+    path: "{{ monitoring_data_dir }}/prometheus"
+    owner: "65534"
+    group: "65534"
+    recurse: true
+
+- name: Fix Grafana data volume ownership
+  ansible.builtin.file:
+    path: "{{ monitoring_data_dir }}/grafana"
+    owner: "472"
+    group: "472"
+    recurse: true
+
+- name: Fix Alertmanager data volume ownership
+  ansible.builtin.file:
+    path: "{{ monitoring_data_dir }}/alertmanager"
+    owner: "65534"
+    group: "65534"
+    recurse: true
+
+- name: Render Prometheus config
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_project_dir }}/prometheus/prometheus.yml"
+    mode: "0644"
+  notify: Recreate monitoring stack
+
+- name: Render Prometheus alert rules
+  ansible.builtin.template:
+    src: alerts.yml.j2
+    dest: "{{ monitoring_project_dir }}/prometheus/alerts.yml"
+    mode: "0644"
+  notify: Recreate monitoring stack
+
+- name: Render Blackbox config
+  ansible.builtin.template:
+    src: blackbox.yml.j2
+    dest: "{{ monitoring_project_dir }}/blackbox/blackbox.yml"
+    mode: "0644"
+  notify: Recreate monitoring stack
+
+- name: Render Alertmanager config
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ monitoring_project_dir }}/alertmanager/alertmanager.yml"
+    mode: "0644"
+  notify: Recreate monitoring stack
+
+- name: Render Grafana datasource provisioning
+  ansible.builtin.template:
+    src: grafana-datasource.yml.j2
+    dest: "{{ monitoring_project_dir }}/grafana/provisioning/datasources/prometheus.yml"
+    mode: "0644"
+  notify: Recreate monitoring stack
+
+- name: Render monitoring docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitoring_project_dir }}/docker-compose.yml"
+    mode: "0644"
+  notify: Recreate monitoring stack
+
+- name: Bring monitoring stack up
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_project_dir }}"
+    state: present
+    remove_orphans: true
+
+- name: Allow Prometheus/Grafana/Alertmanager UI ports through UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item | string }}"
+    proto: tcp
+  loop:
+    - "{{ monitoring_prometheus_port }}"
+    - "{{ monitoring_grafana_port }}"
+    - "{{ monitoring_alertmanager_port }}"

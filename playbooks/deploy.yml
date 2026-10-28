@@ -4,3 +4,10 @@
   gather_facts: true
   roles:
     - openelis
+    - node_exporter
+
+- name: Deploy monitoring stack
+  hosts: monitoring
+  gather_facts: true
+  roles:
+    - monitoring

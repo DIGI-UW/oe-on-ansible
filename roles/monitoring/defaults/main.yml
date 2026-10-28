@@ -1,0 +1,22 @@
+---
+monitoring_project_dir: /opt/monitoring
+monitoring_data_dir: /opt/monitoring/data
+
+monitoring_prometheus_image: prom/prometheus:latest
+monitoring_blackbox_image: prom/blackbox-exporter:latest
+monitoring_grafana_image: grafana/grafana:latest
+monitoring_alertmanager_image: prom/alertmanager:latest
+
+monitoring_prometheus_port: 9090
+monitoring_grafana_port: 3000
+monitoring_alertmanager_port: 9093
+monitoring_blackbox_port: 9115
+
+monitoring_node_exporter_port: 9100
+
+monitoring_grafana_admin_password: "{{ vault_grafana_password | default('admin') }}"
+
+monitoring_probe_http_schemes:
+  - http
+
+monitoring_openelis_targets_group: openelis

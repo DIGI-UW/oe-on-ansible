@@ -1,22 +1,48 @@
 ---
-- name: Update OpenELIS stacks
+- name: Update OpenELIS and node_exporter stacks
   hosts: openelis
   gather_facts: false
   tasks:
-    - name: Pull latest repository changes
+    - name: Pull latest OpenELIS repository changes
       ansible.builtin.git:
         repo: "{{ openelis_repo_url }}"
         dest: "{{ openelis_install_dir }}"
         version: "{{ openelis_repo_ref }}"
         force: true
 
-    - name: Pull latest images for the stack
+    - name: Pull latest OpenELIS images
       community.docker.docker_compose_v2_pull:
         project_src: "{{ openelis_install_dir }}"
 
-    - name: Recreate containers with new images
+    - name: Recreate OpenELIS containers
       community.docker.docker_compose_v2:
         project_src: "{{ openelis_install_dir }}"
+        state: present
+        recreate: always
+        remove_orphans: true
+
+    - name: Pull latest node_exporter image
+      community.docker.docker_compose_v2_pull:
+        project_src: "{{ node_exporter_project_dir }}"
+
+    - name: Recreate node_exporter container
+      community.docker.docker_compose_v2:
+        project_src: "{{ node_exporter_project_dir }}"
+        state: present
+        recreate: always
+        remove_orphans: true
+
+- name: Update monitoring stack
+  hosts: monitoring
+  gather_facts: false
+  tasks:
+    - name: Pull latest monitoring images
+      community.docker.docker_compose_v2_pull:
+        project_src: "{{ monitoring_project_dir }}"
+
+    - name: Recreate monitoring containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ monitoring_project_dir }}"
         state: present
         recreate: always
         remove_orphans: true

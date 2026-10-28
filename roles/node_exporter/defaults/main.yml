@@ -1,0 +1,4 @@
+---
+node_exporter_image: prom/node-exporter:latest
+node_exporter_project_dir: /opt/node_exporter
+node_exporter_port: 9100

@@ -1,9 +1,23 @@
 ---
-- name: Stop OpenELIS stacks
+- name: Stop OpenELIS and node_exporter stacks
   hosts: openelis
   gather_facts: false
   tasks:
     - name: Bring OpenELIS stack down
       community.docker.docker_compose_v2:
         project_src: "{{ openelis_install_dir }}"
+        state: absent
+
+    - name: Bring node_exporter stack down
+      community.docker.docker_compose_v2:
+        project_src: "{{ node_exporter_project_dir }}"
+        state: absent
+
+- name: Stop monitoring stack
+  hosts: monitoring
+  gather_facts: false
+  tasks:
+    - name: Bring monitoring stack down
+      community.docker.docker_compose_v2:
+        project_src: "{{ monitoring_project_dir }}"
         state: absent

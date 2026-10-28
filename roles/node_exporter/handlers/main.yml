@@ -1,0 +1,7 @@
+---
+- name: Recreate node_exporter stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ node_exporter_project_dir }}"
+    state: present
+    recreate: always
+    remove_orphans: true

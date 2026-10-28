@@ -1,0 +1,7 @@
+---
+- name: Recreate monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_project_dir }}"
+    state: present
+    recreate: always
+    remove_orphans: true

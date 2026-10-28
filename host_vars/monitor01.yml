@@ -1,0 +1,4 @@
+---
+# Per-host overrides for monitor01.
+# Example:
+# monitoring_grafana_admin_password: "{{ vault_grafana_password }}"

@@ -25,3 +25,12 @@
     project_src: "{{ openelis_install_dir }}"
     state: present
     remove_orphans: true
+
+- name: Allow OpenELIS proxy ports through UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item | string }}"
+    proto: tcp
+  loop:
+    - "{{ openelis_env.OE_HTTP_PORT | default('80') }}"
+    - "{{ openelis_env.OE_HTTPS_PORT | default('443') }}"
